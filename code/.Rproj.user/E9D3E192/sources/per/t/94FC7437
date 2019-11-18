@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568122797564.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1105932501",
+    "id" : "94FC7437",
+    "lastKnownWriteTime" : 1568123299,
+    "last_content_update" : 1568123299135,
+    "path" : "~/Dropbox/DFG19/code/01-ndsiPsdComputation.R",
+    "project_path" : "01-ndsiPsdComputation.R",
+    "properties" : {
+        "cursorPosition" : "17,53",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

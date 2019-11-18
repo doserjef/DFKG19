@@ -1,0 +1,13 @@
+{
+    "path" : "~/Dropbox/DFKG19/code/multivariateModel",
+    "sortOrder" : [
+        {
+            "ascending" : false,
+            "columnIndex" : 4
+        },
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}

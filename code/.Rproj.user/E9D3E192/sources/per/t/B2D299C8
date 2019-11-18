@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568123770944.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2195074160",
+    "id" : "B2D299C8",
+    "lastKnownWriteTime" : 1568123787,
+    "last_content_update" : 1568123787549,
+    "path" : "~/Dropbox/DFG19/code/04-psdIntYearDesignMatrix.R",
+    "project_path" : "04-psdIntYearDesignMatrix.R",
+    "properties" : {
+        "cursorPosition" : "4,77",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

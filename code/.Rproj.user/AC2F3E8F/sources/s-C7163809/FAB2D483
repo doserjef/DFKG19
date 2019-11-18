@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1574103186878.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "FAB2D483",
+    "lastKnownWriteTime" : 1574081155,
+    "last_content_update" : 1574081155,
+    "path" : "~/Dropbox/DFKG19/DFKG19-github/code/02-yearDesignMatrix.R",
+    "project_path" : "02-yearDesignMatrix.R",
+    "properties" : {
+        "cursorPosition" : "20,21",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

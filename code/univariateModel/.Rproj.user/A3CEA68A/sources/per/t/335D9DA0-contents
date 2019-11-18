@@ -1,0 +1,178 @@
+rm(list = ls())
+library(coda)
+
+# Main Program ------------------------------------------------------------
+
+# Multivariate normal random number generator
+rmvn <- function(n, mu=0, V = matrix(1)){
+  p <- length(mu)
+  if(any(is.na(match(dim(V),p))))
+    stop("Dimension problem!")
+  D <- chol(V)
+  t(matrix(rnorm(n*p), ncol=p)%*%D + rep(mu,rep(n,p)))
+}
+
+# Inverse Gamma random number generator
+rigamma <- function(n, a, b){
+  1/rgamma(n = n, shape = a, rate = b)
+} 
+
+# Logit data transformation
+logit <- function(theta, a, b) {
+  log((theta-a)/(b-theta))
+}
+
+# Inverse logit transformation
+logit.inv <- function(z, a, b) {
+  b-(b-a)/(1+exp(z))
+}
+
+
+# Params ------------------------------------------------------------------
+
+n.samples <- 500
+n.sites <- 13
+ndsi <- as.matrix(read.table("../../data/ndsi"))[, 1]
+y <- as.matrix(logit(ndsi, a = -1, b = 1))
+X <- as.matrix(read.table("../../data/X-year"))
+ind <- read.table("../../data/ind")[, 1]
+n.ind <- length(unique(ind))
+n <- nrow(X)
+W <- as.matrix(rep(1, n))
+n.alpha <- dim(X)[2]
+n.beta <- dim(W)[2]
+# This will be variable for the real data
+s <- rep(0, n.ind)
+for (i in 1:n.ind) {
+  curr <- sum(ind == i)
+  s[i] <- curr
+}
+# s <- rep(5, n.ind)
+# ones.s <- rep(1, 5)
+# ind <- rep(1:n.ind, each = 5)
+
+# Priors ------------------------------------------------------------------
+
+alpha.mu <- rep(0, n.alpha)
+alpha.var <- rep(10000, n.alpha)
+
+beta.mu <- matrix(0, nrow = n.ind, ncol = n.beta)
+
+sigma.sq.a <- 2
+sigma.sq.b <- 1
+
+tau.sq.a <- 2
+tau.sq.b <- 1
+
+
+# Starting values ---------------------------------------------------------
+
+alpha <- rep(0, n.alpha)
+beta <- matrix(0, nrow = n.ind, ncol = n.beta)
+sigma.sq <- 1
+tau.sq <- 1
+y.hat <- rep(0, n)
+
+
+# Sampler Prep ------------------------------------------------------------
+
+alpha.samples <- matrix(0, nrow = n.alpha, ncol = n.samples)
+beta.0.samples <- matrix(0, nrow = n.ind, ncol = n.samples)
+fitted.samples <- matrix(0, nrow = n, ncol = n.samples)
+tau.sq.samples <- rep(0, n.samples)
+sigma.sq.samples <- rep(0, n.samples)
+XTX <- t(X)%*%X
+
+# Gibbs Sampler -----------------------------------------------------------
+
+for (k in 1:n.samples) {
+  
+  # Update alpha samples
+  V <- chol2inv(chol(XTX / sigma.sq + diag(1/alpha.var, n.alpha)))
+  sum.diffs <- rep(0, n.alpha)
+  for (i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # W.i <- W[ind == i, ]
+    W.i <- as.matrix(W[ind == i, ])
+    # sum.diffs <- sum.diffs + t(X.i) %*% (y.i - ones.s*beta.0[i] - w.i * beta.1[i])
+    sum.diffs <- sum.diffs + t(X.i) %*% (y.i - W.i%*% beta[i, ])
+  }
+  v <- sum.diffs / sigma.sq
+  alpha <- rmvn(1, V%*%v, V)
+  
+  # Update beta samples
+  for ( i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # W.i <- W[ind == i, ]
+    W.i <- as.matrix(W[ind == i, ])
+    V <- chol2inv(chol(t(W.i)%*%W.i / sigma.sq + diag(1/tau.sq, n.beta)))
+    v <- (t(W.i) %*% (y.i - X.i %*% alpha)) / sigma.sq
+    beta[i, ] <- rmvn(1, V%*%v, V)
+  }
+  
+  # Update tau.sq samples
+  a <- tau.sq.a + .5 * n.ind * n.beta
+  b <- tau.sq.b + .5 * sum(t(beta)%*%beta)
+  tau.sq <- rigamma(1, a, b)
+  
+  # Update sigma.sq samples
+  a <- sigma.sq.a + .5 * sum(s)
+  b.sum <- 0
+  for (i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # W.i <- W[ind == i, ]
+    W.i <- as.matrix(W[ind == i, ])
+    b.sum <- b.sum + t((y.i - (X.i%*%alpha + W.i%*%beta[i, ]))) %*% 
+      (y.i - (X.i%*%alpha + W.i%*%beta[i, ]))
+  }
+  b <- sigma.sq.b + .5 * b.sum
+  sigma.sq <- rigamma(1, a, b)
+  
+  # Fitted values
+  curr.length <- 0 
+  for (i in 1:n.ind) {
+    x.i <- X[ind == i, ]
+    # W.i <- W[ind == i, ]
+    W.i <- as.matrix(W[ind == i, ])
+    V <- diag(sigma.sq, s[i])
+    mu <- x.i %*% alpha + W.i%*%beta[i, ]
+    y.hat[(curr.length + 1):(curr.length + s[i])] <- rmvn(n = 1, mu = mu, V = V)
+    curr.length <- curr.length + s[i]
+  }
+  
+  # Save Samples
+  alpha.samples[, k] <- alpha
+  beta.0.samples[, k] <- beta[, 1]
+  # beta.1.samples[, k] <- beta[, 2]
+  tau.sq.samples[k] <- tau.sq
+  sigma.sq.samples[k] <- sigma.sq
+  fitted.samples[, k] <- y.hat
+  
+  print(paste(k/n.samples * 100, " percent complete", sep = ""))
+  
+}
+
+
+# Summary -----------------------------------------------------------------
+
+plot(mcmc(t(alpha.samples)),density = FALSE)
+plot(mcmc(tau.sq.samples), density = FALSE)
+plot(mcmc(sigma.sq.samples), density = FALSE)
+
+theta <- cbind(t(alpha.samples), tau.sq.samples, sigma.sq.samples)
+colnames(theta) <- c(paste0("alpha.", 0:(n.alpha-1)), "tau.sq.", "sigma.sq")
+
+burn.in <- floor(0.5 * n.samples)
+sub <- (burn.in+1):n.samples
+
+m.quants <- summary(window(mcmc(theta), start = burn.in))$quantiles
+m.quants
+
+y.hat.mean <- apply(fitted.samples[, sub], 1, mean)
+plot(y[, 1], y.hat.mean)
+
+resids <- y.hat.mean - y[, 1]
+plot(resids)

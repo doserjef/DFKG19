@@ -1,0 +1,14 @@
+This directory contains the necessary files for running the multivariate models 
+described in Doser et al (2019) Assessing soundscape disturbance through hierarchical models
+and acoustic indices: a case study on a shelterwood logged northern Michigan forest. 
+
+File Descriptions: 
+
+computeDesignMatrix.R: computes the design matrix for the multivariate model
+multivarSoundModel.R: Gibbs sampler for the multivariate model when run with real data
+sim-main.R: parent file for assessing model when run with simulated data
+main.R: parent file for assessing model output when run with real data
+sim.R: parent file for simulating data for the multivariate model
+theta-samples-*: posterior samples from the model runs used in the paper for three different chains
+pfile-*: the parameters used in the three runs of the model with the real data.
+sim-multivariateSoundModel.R: Gibbs sampler for simulated data in the multivariate model

@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1569954621704.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "600907242",
+    "id" : "3692213F",
+    "lastKnownWriteTime" : 1574098967,
+    "last_content_update" : 1574098967277,
+    "path" : "~/Dropbox/DFKG19/code/multivariateModel/computeDesignMatrix.R",
+    "project_path" : "computeDesignMatrix.R",
+    "properties" : {
+        "cursorPosition" : "14,27",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

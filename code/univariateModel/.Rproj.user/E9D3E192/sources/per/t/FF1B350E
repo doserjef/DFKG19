@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1569940326136.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3581416995",
+    "id" : "FF1B350E",
+    "lastKnownWriteTime" : 1569941219,
+    "last_content_update" : 1569941219381,
+    "path" : "~/Dropbox/libs/soundscape.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "12,40",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1574100393096.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3073670100",
+    "id" : "83D37BB1",
+    "lastKnownWriteTime" : 1574100688,
+    "last_content_update" : 1574100688982,
+    "path" : "~/Dropbox/DFKG19/code/multivariateModel/sim-multivariateSoundModel.R",
+    "project_path" : "sim-multivariateSoundModel.R",
+    "properties" : {
+        "cursorPosition" : "1,48",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

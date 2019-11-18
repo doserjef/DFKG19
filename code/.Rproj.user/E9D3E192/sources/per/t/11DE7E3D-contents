@@ -1,0 +1,96 @@
+rm(list = ls())
+library(rgdal)
+library(sp)
+library(raster)
+library(sf)
+library(maps)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+# For us map
+library(usmap)
+
+# Computation of a graphic for the logging area used in IBAC presentation
+# 07-mapOfLoggingArea -----------------------------------------------------
+
+locations <- read.csv("../data/siteLocations.csv")
+coordinates(locations) <- ~long + lat
+proj4string(locations) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+
+
+trt.dat <- readOGR(dsn = "../data/", layer = "Michigan_State_Forest_Treatment_History")
+
+point.trt.info <- over(locations, trt.dat)
+
+trt.dat.dfg <- trt.dat[trt.dat@data$OBJECTID == point.trt.info$OBJECTID[10], ]
+plot(trt.dat.dfg)
+points(locations)
+
+library(ggmap)
+register_google(key = "AIzaSyBPAwSY5x8vQqlnG-QwiCAWQW12U3CTLZY")
+michgmap.small <- get_map(location = c(-84.293, 45.537), zoom = 15, maptype = "satellite")
+basemap <- ggmap(michgmap.small)
+
+gg.locations <- data.frame(locations)
+gg.locations <- gg.locations[, c("site", "lat", "long")]
+gg.locations$type <- c(rep("Control", 9), rep("Treatment", 4))
+                             
+gg.trt.dat.dfg <- fortify(trt.dat.dfg)
+
+main <- basemap + 
+  xlab("Longitude") + 
+  ylab("Latitude") + 
+  geom_polygon(data = gg.trt.dat.dfg, aes(x = long, y = lat, color = 'cornsilk'), 
+               show.legend = TRUE, fill = 'coral3', alpha = 0.4) + 
+  geom_point(data = gg.locations, aes(x = long, y = lat), size = 3,
+             col = 'lightsteelblue') + 
+  labs(color='') + 
+  theme(text = element_text(size = 18)) +
+  scale_color_manual(labels = 'Selection Logging Area', values = 'cornsilk')
+  
+
+
+
+# # Get map of Michigan
+mi.dat <- map_data("state") %>% filter(region == "michigan", subregion == "south")
+mi.map <- ggplot(data = mi.dat) +
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "lightblue", color = "black") +
+  coord_quickmap()
+
+study.bbox <- attr(michgmap.small, "bb")
+
+michigan <- mi.map +
+  geom_rect(data = study.bbox, aes(xmin = ll.lon, xmax = ur.lon,
+                                   ymin = ll.lat, ymax = ur.lat), col = "black", 
+            size = 2) +
+  scale_x_continuous(breaks = NULL) + 
+  scale_y_continuous(breaks = NULL) +
+  theme(text = element_text(size = 18)) +
+  xlab("") +
+  ylab("") +
+  theme_classic() + 
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), 
+        legend.position = "none") 
+
+statepop$myvar <- ifelse(statepop$abbr == "MI", 1, 0)
+us.map <- plot_usmap(data = statepop, values = "myvar", color = "black", 
+           exclude = c("Alaska", "Hawaii")) + 
+  scale_fill_continuous(low = "white", high = "lightblue") + 
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), 
+        legend.position = "none") 
+  
+
+
+# Combine in single map
+png("../figures/studyArea.png", width = 900, height = 600)
+grid.newpage()
+v1 <- viewport(width = 0.9, height = 0.9, x = 0.45, y = 0.5)
+v2 <- viewport(width = 0.4, height = 0.4, x = 0.81, y = 0.78)
+v3 <- viewport(width = 0.3, height = 0.3, x = 0.82, y = 0.3)
+print(main, vp = v1)
+print(michigan, vp = v2)
+print(us.map, vp = v3)
+dev.off()
+
+

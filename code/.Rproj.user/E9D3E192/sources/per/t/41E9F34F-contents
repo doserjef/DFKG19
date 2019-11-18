@@ -1,0 +1,61 @@
+rm(list = ls())
+library(dplyr)
+
+# This document creates the design matrix for the NDSI portion of the
+# analysis. 
+# 03-yearDesignMatrix -----------------------------------------------------
+
+# Read in psd/ndsi data and combine with the rain data
+dat <- read.csv("../data/full-ndsi-psd-ordered.csv")
+rain <- read.csv("../data/geophony.csv", stringsAsFactors = FALSE)
+rain$siteInfo <- sub('.*/', '', rain$X)
+rain$year <- as.numeric(substr(rain$siteInfo, 5, 8))
+rain$day <- as.numeric(substr(rain$siteInfo, 11, 12))
+rain$time <- as.numeric(substr(rain$siteInfo, 14, 19))
+rain$X <- NULL
+rain$X.1 <- NULL
+rain$siteInfo <- NULL
+
+dat <- left_join(dat, rain, by = c("year", "day", "time"))
+
+n <- nrow(dat)
+# Each unique site/day/time combination is an individual
+# Create individual identity
+n.ind.counter <- 1
+dat$ind = 1
+for (i in 2:n) {
+  if (sum(dat[i, c("month", "day", "time", "recording.site")] == 
+          dat[i - 1, c("month", "day", "time", "recording.site")]) == 4) {
+    dat$ind[i] = dat$ind[i-1]
+  } else {
+    dat$ind[i] = dat$ind[i-1] + 1
+  }
+}
+
+post.trt.years <- 5
+X <- matrix(0, nrow = n, ncol = 3 + post.trt.years * 2)
+
+# Create design matrix ----------------------------------------------------
+# General intercept
+X[, 1] <- 1
+# Intercept for treatment sites only. Represents overall differences b/w 
+# control and treatment sites. 
+X[, 2][dat$trt == 1] <- 1
+# Overall year effects regardless of site
+X[, 3] <- ifelse(dat$year == 2014, 1, 0)
+X[, 4] <- ifelse(dat$year == 2015, 1, 0)
+X[, 5] <- ifelse(dat$year == 2016, 1, 0)
+X[, 6] <- ifelse(dat$year == 2017, 1, 0)
+X[, 7] <- ifelse(dat$year == 2018, 1, 0)
+# Additional year effects from the treatment sites
+X[, 8] <- ifelse(dat$year == 2014 & dat$trt == 1, 1, 0)
+X[, 9] <- ifelse(dat$year == 2015 & dat$trt == 1, 1, 0)
+X[, 10] <- ifelse(dat$year == 2016 & dat$trt == 1, 1, 0)
+X[, 11] <- ifelse(dat$year == 2017 & dat$trt == 1, 1, 0)
+X[, 12] <- ifelse(dat$year == 2018 & dat$trt == 1, 1, 0)
+# Influence of rain
+X[, 13] <- dat$rain
+
+write.table(X, "../data/X-year", row.names = FALSE, col.names = FALSE, sep = "\t")
+write.table(dat$ndsi, "../data/ndsi", row.names = FALSE, col.names = FALSE, sep = "\t")
+write.table(dat$ind, "../data/ind", row.names = FALSE, col.names = FALSE, sep = "\t")

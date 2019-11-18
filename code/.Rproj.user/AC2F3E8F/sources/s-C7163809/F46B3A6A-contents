@@ -1,0 +1,10 @@
+The 'code' directory contains code for data prep, organization, and models used in
+Doser et al (2019): Assessing soundscape disturbance through hierarchical models
+and acoustic indices: a case study on a shelterwood logged northern Michigan forest.
+
+Files in the main directory were computed and used in the order of the numbers of the files
+
+The specific code for running the two models described in the manuscript are found in 
+the univariateModel and multivariateModel directories. 
+
+The fiile soundscape.R contains two functions used in some of the main files. 

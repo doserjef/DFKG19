@@ -1,0 +1,207 @@
+rm(list = ls())
+library(coda)
+
+# Main Program ------------------------------------------------------------
+
+# Multivariate normal random number generator
+rmvn <- function(n, mu=0, V = matrix(1)){
+  p <- length(mu)
+  if(any(is.na(match(dim(V),p))))
+    stop("Dimension problem!")
+  D <- chol(V)
+  t(matrix(rnorm(n*p), ncol=p)%*%D + rep(mu,rep(n,p)))
+}
+
+# Inverse Gamma random number generator
+rigamma <- function(n, a, b){
+  1/rgamma(n = n, shape = a, rate = b)
+} 
+
+# Logit data transformation
+logit <- function(theta, a, b) {
+  log((theta-a)/(b-theta))
+}
+
+# Inverse logit transformation
+logit.inv <- function(z, a, b) {
+  b-(b-a)/(1+exp(z))
+}
+
+
+# Params ------------------------------------------------------------------
+
+n.samples <- 500
+n.sites <- 13
+ndsi <- as.matrix(read.table("../../data/ndsi"))[, 1]
+y <- as.matrix(logit(ndsi, a = -1, b = 1))
+X <- as.matrix(read.table("../../data/X-year"))
+ind <- read.table("../../data/ind")[, 1]
+n.ind <- length(unique(ind))
+n <- nrow(X)
+W <- as.matrix(rep(1, n))
+n.alpha <- dim(X)[2]
+n.beta <- dim(W)[2]
+# This will be variable for the real data
+s <- rep(0, n.ind)
+for (i in 1:n.ind) {
+  curr <- sum(ind == i)
+  s[i] <- curr
+}
+# s <- rep(5, n.ind)
+# ones.s <- rep(1, 5)
+# ind <- rep(1:n.ind, each = 5)
+
+# Priors ------------------------------------------------------------------
+
+alpha.mu <- rep(0, n.alpha)
+alpha.var <- rep(10000, n.alpha)
+
+beta.mu <- matrix(0, nrow = n.ind, ncol = n.beta)
+
+sigma.sq.a <- 2
+sigma.sq.b <- 1
+
+tau.sq.a <- 2
+tau.sq.b <- 1
+
+
+# Starting values ---------------------------------------------------------
+
+alpha <- rep(0, n.alpha)
+beta <- matrix(0, nrow = n.ind, ncol = n.beta)
+sigma.sq <- 1
+tau.sq <- 1
+y.hat <- rep(0, n)
+
+
+# Sampler Prep ------------------------------------------------------------
+
+alpha.samples <- matrix(0, nrow = n.alpha, ncol = n.samples)
+beta.0.samples <- matrix(0, nrow = n.ind, ncol = n.samples)
+fitted.samples <- matrix(0, nrow = n, ncol = n.samples)
+tau.sq.samples <- rep(0, n.samples)
+sigma.sq.samples <- rep(0, n.samples)
+XTX <- t(X)%*%X
+
+# Gibbs Sampler -----------------------------------------------------------
+
+for (k in 1:n.samples) {
+  
+  # Update alpha samples
+  V <- chol2inv(chol(XTX / sigma.sq + diag(1/alpha.var, n.alpha)))
+  sum.diffs <- rep(0, n.alpha)
+  for (i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # W.i <- W[ind == i, ]
+    W.i <- as.matrix(W[ind == i, ])
+    # sum.diffs <- sum.diffs + t(X.i) %*% (y.i - ones.s*beta.0[i] - w.i * beta.1[i])
+    sum.diffs <- sum.diffs + t(X.i) %*% (y.i - W.i%*% beta[i, ])
+  }
+  v <- sum.diffs / sigma.sq
+  alpha <- rmvn(1, V%*%v, V)
+  
+  # Update beta samples
+  for ( i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # W.i <- W[ind == i, ]
+    W.i <- as.matrix(W[ind == i, ])
+    V <- chol2inv(chol(t(W.i)%*%W.i / sigma.sq + diag(1/tau.sq, n.beta)))
+    v <- (t(W.i) %*% (y.i - X.i %*% alpha)) / sigma.sq
+    beta[i, ] <- rmvn(1, V%*%v, V)
+  }
+  
+  # Update tau.sq samples
+  a <- tau.sq.a + .5 * n.ind * n.beta
+  b <- tau.sq.b + .5 * sum(t(beta)%*%beta)
+  tau.sq <- rigamma(1, a, b)
+  
+  # Update sigma.sq samples
+  a <- sigma.sq.a + .5 * sum(s)
+  b.sum <- 0
+  for (i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # W.i <- W[ind == i, ]
+    W.i <- as.matrix(W[ind == i, ])
+    b.sum <- b.sum + t((y.i - (X.i%*%alpha + W.i%*%beta[i, ]))) %*% 
+      (y.i - (X.i%*%alpha + W.i%*%beta[i, ]))
+  }
+  b <- sigma.sq.b + .5 * b.sum
+  sigma.sq <- rigamma(1, a, b)
+  
+  # Fitted values
+  curr.length <- 0 
+  for (i in 1:n.ind) {
+    x.i <- X[ind == i, ]
+    # W.i <- W[ind == i, ]
+    W.i <- as.matrix(W[ind == i, ])
+    V <- diag(sigma.sq, s[i])
+    mu <- x.i %*% alpha + W.i%*%beta[i, ]
+    y.hat[(curr.length + 1):(curr.length + s[i])] <- rmvn(n = 1, mu = mu, V = V)
+    curr.length <- curr.length + s[i]
+  }
+  
+  # Save Samples
+  alpha.samples[, k] <- alpha
+  beta.0.samples[, k] <- beta[, 1]
+  # beta.1.samples[, k] <- beta[, 2]
+  tau.sq.samples[k] <- tau.sq
+  sigma.sq.samples[k] <- sigma.sq
+  fitted.samples[, k] <- y.hat
+  
+  print(paste(k/n.samples * 100, " percent complete", sep = ""))
+  
+}
+
+
+# Summary -----------------------------------------------------------------
+
+plot(mcmc(t(alpha.samples)),density = FALSE)
+plot(mcmc(tau.sq.samples), density = FALSE)
+plot(mcmc(sigma.sq.samples), density = FALSE)
+
+theta <- cbind(t(alpha.samples), tau.sq.samples, sigma.sq.samples)
+colnames(theta) <- c(paste0("alpha.", 0:(n.alpha-1)), "tau.sq.", "sigma.sq")
+
+burn.in <- floor(0.1 * n.samples)
+sub <- (burn.in+1):n.samples
+
+m.quants <- summary(window(mcmc(theta), start = burn.in))$quantiles
+m.quants
+
+y.hat.mean <- apply(fitted.samples[, sub], 1, mean)
+plot(y[, 1], y.hat.mean)
+lines(y[, 1], y[, 1], col = 'red')
+
+resids <- y.hat.mean - y[, 1]
+plot(resids, type = 'l')
+
+ctrl.alpha.post <- as.data.frame(m.quants[3:7, ])
+row.names(ctrl.alpha.post) <- c("ctrl2014", "ctrl2015", "ctrl2016", "ctrl2017", "ctrl2018")
+years <- c(2014:2018)
+ctrl.alpha.post$years <- years
+trt.alpha.post <- as.data.frame(m.quants[3:7, ] + m.quants[8:12, ])
+row.names(trt.alpha.post) <- c("trt2014", "trt2015", "trt2016", "trt2017", "trt2018")
+trt.alpha.post$years <- years
+
+png("../../figures/ndsiYearEffects.png", width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+plot(years, ctrl.alpha.post[, 3], axes = FALSE, pch = 17, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = expression(paste(Delta, "log(NDSI) from pre-trt", sep = "")), 
+     ylim = c(min(c(trt.alpha.post[, 1], ctrl.alpha.post[, 1])), 
+              max(c(trt.alpha.post[, 5], ctrl.alpha.post[, 5]))), xpd = TRUE, 
+     col = 'blue'
+     )
+points(years, trt.alpha.post[, 3], pch = 19, col = 'red')
+abline(h = 0, lty = 2)
+segments(years, ctrl.alpha.post[, 1], years, ctrl.alpha.post[, 5], col = 'blue')
+segments(years, trt.alpha.post[, 1], years, trt.alpha.post[, 5], col = 'red', lty = 2)
+axis(1, cex.axis = 1.25)
+axis(2, at = seq(-2, .5, by = 0.5), labels = seq(-2, .5, by = 0.5), las = 1, xpd = TRUE, 
+     cex.axis = 1.25)
+legend(2017, -1.25, legend = c("Control", "Treatment"), col = c("blue", "red"),
+       lty = c(1, 2), pch = c(17, 19))
+dev.off()
+

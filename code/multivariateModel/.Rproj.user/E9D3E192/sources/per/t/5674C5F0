@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1569941691448.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2760543487",
+    "id" : "5674C5F0",
+    "lastKnownWriteTime" : 1570033913,
+    "last_content_update" : 1570033913270,
+    "path" : "~/Dropbox/DFG19/models/psd-intervention-year/multivarSoundModel.R",
+    "project_path" : "multivarSoundModel.R",
+    "properties" : {
+        "cursorPosition" : "129,38",
+        "scrollLine" : "118",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

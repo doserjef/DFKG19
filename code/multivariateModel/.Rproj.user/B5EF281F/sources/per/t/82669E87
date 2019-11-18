@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557965110736.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "36993096",
+    "id" : "82669E87",
+    "lastKnownWriteTime" : 1558199767,
+    "last_content_update" : 1558227577958,
+    "path" : "~/Dropbox/DFG19/models/psd-intervention-year/sim-main.R",
+    "project_path" : "sim-main.R",
+    "properties" : {
+        "cursorPosition" : "168,26",
+        "scrollLine" : "21"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

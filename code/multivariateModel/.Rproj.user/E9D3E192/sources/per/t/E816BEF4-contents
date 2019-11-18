@@ -1,0 +1,223 @@
+# There is a hard core bug here. Not sure what it is. 
+
+rm(list = ls())
+library(coda)
+
+# Main Program ------------------------------------------------------------
+
+# Multivariate normal random number generator
+rmvn <- function(n, mu=0, V = matrix(1)){
+  p <- length(mu)
+  if(any(is.na(match(dim(V),p))))
+    stop("Dimension problem!")
+  D <- chol(V)
+  t(matrix(rnorm(n*p), ncol=p)%*%D + rep(mu,rep(n,p)))
+}
+
+# Inverse Gamma random number generator
+rigamma <- function(n, a, b){
+  1/rgamma(n = n, shape = a, rate = b)
+} 
+
+# Inverse Wishart random number generator
+riWishart <- function(n, df, Sigma) {
+  1/rWishart(n = n, df = df, Sigma = Sigma)
+}
+
+
+# Params ------------------------------------------------------------------
+
+n.samples <- 50
+n.sites <- 13
+n.psd <- 10
+n.ind.full <- 13 * 4 * 30 * n.psd
+n.ind.one <- 13 * 4 * 30
+n.years <- 5
+y <- as.matrix(read.table("sim-y"))
+X <- as.matrix(read.table("sim-X"))
+beta.true <- as.matrix(read.table("sim-beta"))
+alpha.true <- as.matrix(read.table("sim-alpha"))
+n <- nrow(X)
+n.alpha <- dim(X)[2]
+n.beta <- dim(beta.true)[2]
+# Create vector to indicate the site location. If data set is uneven, will have 
+# to do this before. 
+site.ind <- rep(1:n.sites, each = n / n.sites)
+# This will be variable for the real data
+s <- rep(n.years, n.ind.one)
+ones.s <- rep(1, n.years)
+ind <- rep(1:n.ind.one, each = n.years * n.psd)
+ind.beta <- rep(1:n.ind.one, each = n.psd)
+
+# Priors ------------------------------------------------------------------
+
+# Normal prior for fixed coefficients
+alpha.mu <- rep(0, n.alpha)
+alpha.var <- rep(10000, n.alpha)
+
+# Normal prior on random individual effects
+beta.mu <- matrix(0, nrow = n.ind.full, ncol = n.beta)
+
+# # Inverse gamma prior on process variance
+# sigma.sq.a <- 2
+# sigma.sq.b <- 1
+
+# Inverse wishart prior on 10 x 10 psd covariance matrix
+R.sigma <- diag(0.1, n.psd)
+r.sigma <- 3
+
+# Inverse wishart prior on 10 x 10 random effects covariance matrix
+R.lambda <- diag(0.1, n.psd)
+r.lambda <- 3
+
+# Starting values ---------------------------------------------------------
+
+alpha <- rep(0, n.alpha)
+beta <- matrix(0, nrow = n.ind.full, ncol = n.beta)
+# sigma.sq <- 1
+Sigma <- diag(1, n.psd)
+lambda <- diag(1.5, n.psd)
+y.hat <- rep(0, n)
+
+
+# Sampler Prep ------------------------------------------------------------
+
+alpha.samples <- matrix(0, nrow = n.alpha, ncol = n.samples)
+beta.samples <- matrix(0, nrow = n.ind.full, ncol = n.samples)
+fitted.samples <- matrix(0, nrow = n, ncol = n.samples)
+lambda.samples <- matrix(0, nrow = n.psd * n.psd, ncol = n.samples)
+# sigma.sq.samples <- rep(0, n.samples)
+sigma.samples <- matrix(0, nrow = n.psd * n.psd, ncol = n.samples)
+XTX <- t(X)%*%X
+
+# Gibbs Sampler -----------------------------------------------------------
+
+for (k in 1:n.samples) {
+  
+  # Update alpha samples
+  I.curr <- diag(n.alpha / n.psd)
+  sum.diffs <- rep(0, n.alpha)
+  for (i in 1:n.ind.one) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    sigma.curr <- kronecker(I.curr, Sigma)
+    V <- chol2inv(chol(XTX %*% chol2inv(chol(sigma.curr)) + diag(1/alpha.var, n.alpha)))
+    # Faster way to code the indicator matrix described in the sampler
+    beta.i <- rep(beta[ind.beta ==i], times = s[i]) 
+    sum.diffs <- sum.diffs + t(X.i) %*% (y.i - beta.i)
+  }
+  v <- chol2inv(chol(sigma.curr)) %*% sum.diffs 
+  alpha <- rmvn(1, V%*%v, V)
+  
+  # Update beta samples
+  for (i in 1:n.ind.one) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # V <- chol2inv(chol(diag(s[i] / sigma.sq, n.psd) + chol2inv(chol(lambda))))
+    V <- chol2inv(chol(s[i] * chol2inv(chol(Sigma)) + chol2inv(chol(lambda))))
+    # Indicator matrix (aka w)
+    ones.mat <- diag(1, n.psd)
+    ones.mat <- matrix(rep(ones.mat, s[i]), nrow = n.psd * s[i],
+                       ncol = n.psd, byrow = T)
+    v <- chol2inv(chol(Sigma)) %*% t(ones.mat) %*% (y.i - X.i %*% alpha)
+    
+    beta[((i-1)*n.psd + 1):(i*n.psd), ] <- rmvn(1, V%*%v, V)
+  }
+  
+  # Update sigma.sq samples
+  # a <- sigma.sq.a + 5 * sum(s)
+  # b.sum <- 0
+  # for (i in 1:n.ind.one) {
+  #   X.i <- X[ind == i, ]
+  #   y.i <- y[ind == i]
+  #   # This is a faster way to code the identicator matrix described in the sampler
+  #   beta.i <- rep(beta[ind.beta ==i], times = s[i]) 
+  #   b.sum <- b.sum + t((y.i - (X.i%*%alpha + beta.i))) %*% 
+  #     (y.i - (X.i%*%alpha + beta.i))
+  # }
+  # b <- sigma.sq.b + .5 * b.sum
+  # sigma.sq <- rigamma(1, a, b)
+  
+  # Update Sigma covariance matrix
+  
+  a <- sum(s) + r.sigma
+  l.sum <- matrix(0, ncol = n.psd, nrow = n.psd)
+  for (i in 1:n.ind.one) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i, ]
+    beta.i <- beta[ind.beta ==i]
+    for (j in 1:s[i]) {
+      X.i.j <- X.i[((j-1)*n.psd + 1):(j*n.psd), ]
+      y.i.j <- y.i[((j-1)*n.psd + 1):(j*n.psd)]
+      l.sum <- l.sum + (y.i.j - X.i.j%*%alpha - beta.i) %*% t(y.i.j - X.i.j%*%alpha - beta.i)
+    }
+  }
+  b <- chol2inv(chol(l.sum + r.sigma*R.sigma))
+  Sigma <- chol2inv(chol(rWishart(1, a, b)[, , 1]))
+  
+  # Update lambda (inverse) samples
+  a <- n.ind.one + r.lambda
+  beta.sum <- matrix(0, ncol = n.psd, nrow = n.psd)
+  for (i in 1:n.ind.one) {
+    beta.sum <- beta.sum + (beta[((i-1)*n.psd + 1):(i*n.psd), ] %*% 
+                              t(beta[((i-1)*n.psd + 1):(i*n.psd), ]))
+  }
+  b <- chol2inv(chol(beta.sum + r.lambda*R.lambda))
+  # Note that the rWishart function returns a 3D array, so you need to 
+  # extract only the first two dimensions
+  lambda <- chol2inv(chol(rWishart(1, a, b)[, , 1]))
+  
+  # Fitted values
+  for (i in 1:n.ind.one) {
+    x.i <- X[ind == i, ]
+    beta.i <- rep(beta[ind.beta ==i], times = s[i])
+    I.s <- diag(s[i])
+    V <- kronecker(I.s, Sigma)
+    mu <- x.i %*% alpha + beta.i
+    # Will have to change if s[i] is not constant, which is what I'm anticipating
+    y.hat[((i-1)*s[i]*n.psd + 1):(((i-1)*s[i]*n.psd)+s[i]*n.psd)] <- 
+      rmvn(n = 1, mu = mu, V = V)
+  }
+  
+  # Save Samples
+  alpha.samples[, k] <- alpha
+  beta.samples[, k] <- beta[, 1]
+  lambda.samples[, k] <- c(lambda)
+  sigma.samples[, k] <- c(Sigma)
+  fitted.samples[, k] <- y.hat
+  
+  print(paste(k/n.samples * 100, " percent complete", sep = ""))
+  
+}
+
+
+# Summary -----------------------------------------------------------------
+
+# Look at process varaince
+plot(mcmc(sigma.sq.samples), density = FALSE)
+
+# Lambda covariance matrix
+summary(mcmc(t(lambda.samples)))
+
+# Burn in
+burn.in <- floor(0.5 * n.samples)
+sub <- (burn.in+1):n.samples
+
+# Fixed coefficients
+alpha.hat.mean <- apply(alpha.samples[, sub], 1, mean)
+plot(alpha.true[, 1], alpha.hat.mean, pch = 19)
+lines(alpha.true[, 1], alpha.true[, 1], col = 'red')
+summary(mcmc(window(t(alpha.samples), start = burn.in)))
+
+summary(mcmc(window(t(lambda.samples), start = burn.in)))
+
+
+# Individual random effects
+beta.hat.mean <- apply(beta.samples[, sub], 1, mean)
+plot(beta.true[, 1], beta.hat.mean)
+lines(beta.true[, 1], beta.true[, 1], col = 'red')
+
+# Fitted values
+y.hat.mean <- apply(fitted.samples[, sub], 1, mean)
+plot(y[, 1], y.hat.mean)
+lines(y.hat.mean, y.hat.mean, col = 'red')

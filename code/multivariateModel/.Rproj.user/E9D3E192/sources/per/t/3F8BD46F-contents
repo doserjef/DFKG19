@@ -1,0 +1,311 @@
+rm(list = ls())
+library(coda)
+# Summary -----------------------------------------------------------------
+
+n.samples <- 300
+theta.1 <- t(matrix(scan("theta-samples-1"), ncol = n.samples, byrow = F))
+theta.2 <- t(matrix(scan("theta-samples-2"), ncol = n.samples, byrow =F))
+theta.3 <- t(matrix(scan("theta-samples-3"), ncol = n.samples, byrow = F))
+
+# n.alpha <- 130
+n.alpha <- 52
+n.lambda <- 16
+n.indices <- 4
+colnames(theta.1) <- c(paste0("alpha.", 1:n.alpha), paste0("lambda.", 1:n.lambda), "sigma.sq")
+colnames(theta.2) <- colnames(theta.1)
+colnames(theta.3) <- colnames(theta.2)
+
+burn.in <- floor(0.5 * n.samples)
+sub <- (burn.in+1):n.samples
+
+options(scipen=999)
+m.quants.1 <- summary(window(mcmc(theta.1), start = burn.in))$quantiles
+m.quants.2 <- summary(window(mcmc(theta.2), start = burn.in))$quantiles
+m.quants.3 <- summary(window(mcmc(theta.3), start = burn.in))$quantiles
+
+# Assess convergence
+chains <- mcmc.list(mcmc(theta.1), mcmc(theta.2), mcmc(theta.3))
+plot(chains, density = FALSE)
+# Not working for some reason, complaining about positive definiteness. 
+gelman.diag(chains)
+
+# Note that the lambda values are by row. i.e [1, 1] is first, followed by [1, 2]
+# Although it doesn't even matter since it's a covariance matrix and is symmetric. 
+lambda.quants.1 <- m.quants.1[(n.alpha + 1):(n.alpha + n.lambda), ]
+lambda.med.mat <- matrix(lambda.quants.1[, 3], nrow = n.indices)
+cov2cor(lambda.med.mat)
+lambda.lower.mat <- matrix(lambda.quants.1[, 1], nrow = n.indices)
+lambda.upper.mat <- matrix(lambda.quants.1[, 5], nrow = n.indices)
+cov2cor(lambda.lower.mat)
+cov2cor(lambda.upper.mat)
+
+# "Non-Significant Values": PSD2 and PSD8
+# PSD3 and PSD4
+
+
+# Check out the Rain Coefficients -----------------------------------------
+
+alpha.out <- m.quants.1[13:130, ]
+rain.out <- alpha.out[seq(1, nrow(alpha.out), 13), ]
+
+
+#  Check out the non-treatment effects ------------------------------------
+alpha.nontrt.out <- m.quants.1[2:119, ]
+nontrt.out <- alpha.nontrt.out[seq(1, nrow(alpha.out), 13), ]
+
+
+# All sites
+post.trt.years <- 5
+n.indices <- 10
+ctrl.alpha.post <- matrix(0, nrow = post.trt.years * n.indices, ncol = 5)
+start <- 3
+for (i in 1:n.indices) {
+  ctrl.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ] <- 
+    m.quants.1[start:(start+post.trt.years-1), ]
+  start <- start + post.trt.years*2 + 3
+  print(start)
+}
+ctrl.alpha.post <- as.data.frame(ctrl.alpha.post)
+# Treatment
+trt.alpha.post <- matrix(0, nrow = post.trt.years * n.indices, ncol = 5)
+start <- 8
+for (i in 1:n.indices) {
+  trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ] <- 
+    m.quants.1[start:(start+post.trt.years-1), ]
+  start <- start + post.trt.years*2 + 3
+}
+# Year effects for treatment sites are the sum of the alpha coefficients. 
+trt.alpha.post <- trt.alpha.post
+trt.alpha.post <- as.data.frame(trt.alpha.post)
+
+years <- c(2014:2018)
+trt.alpha.post$years <- years
+ctrl.alpha.post$years <- years
+
+
+# Some relatively useful figures ------------------------------------------
+
+i <- 1
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25,
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5])), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+curr.ctrl.round <- round(curr.ctrl / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5], curr.ctrl.round[, 1:5]))
+axis(2, at = seq(y.vals[1], y.vals[2], by = 0.5), 
+     labels = seq(y.vals[1], y.vals[2], by = 0.5), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 1-2 kHz")
+dev.off()
+
+i <- 2
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", lwd = 1.25,
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5])), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+axis(2, at = seq(-0.75, 0.75, by = 0.25), 
+     labels = seq(-0.75, 0.75, by = 0.25), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 2-3 kHz")
+dev.off()
+
+i <- 3
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25,
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5])), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+curr.ctrl.round <- round(curr.ctrl / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5], curr.ctrl.round[, 1:5]))
+axis(2, at = seq(y.vals[1], y.vals[2], by = 0.5), 
+     labels = seq(y.vals[1], y.vals[2], by = 0.5), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 3-4 kHz")
+dev.off()
+
+i <- 4
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25, 
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5])), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+curr.ctrl.round <- round(curr.ctrl / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5], curr.ctrl.round[, 1:5]))
+axis(2, at = seq(y.vals[1], y.vals[2], by = 0.25), 
+     labels = seq(y.vals[1], y.vals[2], by = 0.25), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 4-5 kHz")
+dev.off()
+
+i <- 5
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25,
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5])), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+curr.ctrl.round <- round(curr.ctrl / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5], curr.ctrl.round[, 1:5]))
+axis(2, at = seq(y.vals[1], y.vals[2], by = 0.5), 
+     labels = seq(y.vals[1], y.vals[2], by = 0.5), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 5-6 kHz")
+dev.off()
+
+
+i <- 6
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25, 
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5])), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+curr.ctrl.round <- round(curr.ctrl / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5], curr.ctrl.round[, 1:5]))
+axis(2, at = seq(y.vals[1], y.vals[2], by = 0.5), 
+     labels = seq(y.vals[1], y.vals[2], by = 0.5), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 6-7 kHz")
+dev.off()
+
+i <- 7
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25, 
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5])), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+curr.ctrl.round <- round(curr.ctrl / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5], curr.ctrl.round[, 1:5]))
+axis(2, at = seq(y.vals[1], y.vals[2], by = 0.5), 
+     labels = seq(y.vals[1], y.vals[2], by = 0.5), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 7-8 kHz")
+dev.off()
+
+i <- 8
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25, 
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5], 0)), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5]))
+axis(2, at = seq(-1.25, 0, by = 0.25), 
+     labels = seq(-1.25, 0, by = 0.25), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 8-9 kHz")
+dev.off()
+
+i <- 9
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25,
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5], 0)), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5]))
+axis(2, at = seq(-1.5, 0, by = 0.25), 
+     labels = seq(-1.5, 0, by = 0.25), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 9-10 kHz")
+dev.off()
+
+i <- 10
+png(paste("../../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.ctrl <- ctrl.alpha.post[((i-1) * post.trt.years + 1):(i *post.trt.years), ]
+plot(years, curr.trt[, 3], axes = FALSE, pch = 19, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = "Year Effects", cex = 1.25, 
+     ylim = c(min(curr.trt[, 1]), 
+              max(curr.trt[, 5], 0)), xpd = TRUE
+)
+abline(h = 0, lty = 2)
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'grey', lty = 1.5)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round[, 1:5]))
+axis(2, at = seq(-2, 0, by = 0.5), 
+     labels = seq(-2, 0, by = 0.5), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+title("logit(PSD) 10-11 kHz")
+dev.off()

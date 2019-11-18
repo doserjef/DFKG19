@@ -1,0 +1,50 @@
+rm(list = ls())
+library(dplyr)
+library(tidyr)
+# 04-psdIntYearDesginMatrix.r ---------------------------------------------
+setwd("~/Dropbox/DFG19/code")
+dat <- read.csv("../data/full-ndsi-psd-ordered.csv")
+
+
+long.dat <- gather(dat, key = "PSD", value = "value", V1:V10)
+
+# Order data by each "individual" recording site/day/time combo
+ordered.long.dat <- long.dat %>% 
+  arrange(recording.site, day, time, year)
+ordered.long.dat$X <- NULL
+n <- nrow(ordered.long.dat)
+
+# Create indicator variable for each "individual"
+ordered.long.dat$ind = 1
+for (i in 2:n) {
+  if (sum(ordered.long.dat[i, c("month", "day", "time", "recording.site")] == 
+          ordered.long.dat[i - 1, c("month", "day", "time", "recording.site")]) == 4) {
+    ordered.long.dat$ind[i] = ordered.long.dat$ind[i-1]
+  } else {
+    ordered.long.dat$ind[i] = ordered.long.dat$ind[i-1] + 1
+  }
+}
+
+
+# Construct design matrix
+n.psd <- 10
+post.trt.years <- 5
+X <- matrix(0, ncol = ((post.trt.years * 2) + 2) * n.psd, nrow = n)
+psd.ind <- rep(1:n.psd, length.out = n)
+trt.ind <- ordered.long.dat$trt
+year <- dat$year
+for (i in 1:n.psd) {
+  # Respective intercept for each psd value
+  X[, (i-1)*n.psd + 1] <- ifelse(psd.ind == i, 1, 0)
+  X[, (i-1)*n.psd + 2] <- ifelse(psd.ind == i & trt.ind == 1, 1, 0)
+  X[, (i-1)*n.psd + 3] <- ifelse(psd.ind == i & year == 2014, 1, 0)
+  X[, (i-1)*n.psd + 4] <- ifelse(psd.ind == i & year == 2015, 1, 0)
+  X[, (i-1)*n.psd + 5] <- ifelse(psd.ind == i & year == 2016, 1, 0)
+  X[, (i-1)*n.psd + 6] <- ifelse(psd.ind == i & year == 2017, 1, 0)
+  X[, (i-1)*n.psd + 7] <- ifelse(psd.ind == i & year == 2018, 1, 0)
+  X[, (i-1)*n.psd + 8] <- ifelse(psd.ind == i & year == 2014 & trt.ind == 1, 1, 0)
+  X[, (i-1)*n.psd + 9] <- ifelse(psd.ind == i & year == 2015 & trt.ind == 1, 1, 0)
+  X[, (i-1)*n.psd + 10] <- ifelse(psd.ind == i & year == 2016 & trt.ind == 1, 1, 0)
+  X[, (i-1)*n.psd + 11] <- ifelse(psd.ind == i & year == 2017 & trt.ind == 1, 1, 0)
+  X[, (i-1)*n.psd + 12] <- ifelse(psd.ind == i & year == 2018 & trt.ind == 1, 1, 0)
+}

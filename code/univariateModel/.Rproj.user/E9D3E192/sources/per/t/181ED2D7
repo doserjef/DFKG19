@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568133546057.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2673296092",
+    "id" : "181ED2D7",
+    "lastKnownWriteTime" : 1570034982,
+    "last_content_update" : 1570034982414,
+    "path" : "~/Dropbox/DFG19/models/intervention-year/summary.R",
+    "project_path" : "summary.R",
+    "properties" : {
+        "cursorPosition" : "54,0",
+        "scrollLine" : "42"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

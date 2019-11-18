@@ -1,0 +1,35 @@
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models/intervention]0;~/Dropbox/DFG19/models/intervention[?1034hJeffs-MacBook-Pro-2:intervention jeffdoser$ [KJeffs-MacBook-Pro-2:intervention jeffdoser$ make
+g++ -O3 -fopenmp main.cpp -c -I/opt/OpenBLAS/include -I/opt/R/3.5.1/lib/R/include -I/usr/include/gsl -L /opt/OpenBLAS/lib -lopenblas -lpthread -lgfortran -L /opt/R/3.5.1/lib/R/lib -lR -lRmath -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lm
+clang: [0;1;35mwarning: [0m-lopenblas: 'linker' input unused [-Wunused-command-line-argument][0m
+clang: [0;1;35mwarning: [0m-lpthread: 'linker' input unused [-Wunused-command-line-argument][0m
+clang: [0;1;35mwarning: [0m-lgfortran: 'linker' input unused [-Wunused-command-line-argument][0m
+clang: [0;1;35mwarning: [0m-lR: 'linker' input unused [-Wunused-command-line-argument][0m
+clang: [0;1;35mwarning: [0m-lRmath: 'linker' input unused [-Wunused-command-line-argument][0m
+clang: [0;1;35mwarning: [0m-lgsl: 'linker' input unused [-Wunused-command-line-argument][0m
+clang: [0;1;35mwarning: [0m-lgslcblas: 'linker' input unused [-Wunused-command-line-argument][0m
+clang: [0;1;35mwarning: [0m-lm: 'linker' input unused [-Wunused-command-line-argument][0m
+clang: [0;1;31merror: [0munsupported option '-fopenmp'[0m
+make: *** [main.o] Error 1
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models/intervention]0;~/Dropbox/DFG19/models/interventionJeffs-MacBook-Pro-2:intervention jeffdoser$ cd ../
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models]0;~/Dropbox/DFG19/modelsJeffs-MacBook-Pro-2:models jeffdoser$ ls
+bssLag1Lag32	intervention	randomWalkBSS
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models]0;~/Dropbox/DFG19/modelsJeffs-MacBook-Pro-2:models jeffdoser$ cd ../
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19]0;~/Dropbox/DFG19Jeffs-MacBook-Pro-2:DFG19 jeffdoser$ [KJeffs-MacBook-Pro-2:DFG19 jeffdoser$ [KJeffs-MacBook-Pro-2:DFG19 jeffdoser$ [KJeffs-MacBook-Pro-2:DFG19 jeffdoser$ [KJeffs-MacBook-Pro-2:DFG19 jeffdoser$ Restored session: Wed Apr  3 21:17:31 EDT 2019
+[KJeffs-MacBook-Pro-2:DFG19 jeffdoser$ ls
+LA0920130601-063000.wav	literature
+code			models
+data			sound1.mp3
+documents
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19]0;~/Dropbox/DFG19Jeffs-MacBook-Pro-2:DFG19 jeffdoser$ cd models
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models]0;~/Dropbox/DFG19/modelsJeffs-MacBook-Pro-2:models jeffdoser$ ls
+bssLag1Lag32	intervention	randomWalkBSS
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models]0;~/Dropbox/DFG19/modelsJeffs-MacBook-Pro-2:models jeffdoser$ cd intervention/
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models/intervention]0;~/Dropbox/DFG19/models/interventionJeffs-MacBook-Pro-2:intervention jeffdoser$ ls
+Makefile		sim-beta1
+intervention.Rproj	sim-fitted
+main.R			sim-sigmaSq
+sim-alpha		sim-tauSq
+sim-beta		sim.R
+sim-beta0		sumary.R
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models/intervention]0;~/Dropbox/DFG19/models/interventionJeffs-MacBook-Pro-2:intervention jeffdoser$ mv main.R main-sim[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[Kcp main [K.R main[K[K[K[Ksim-main.R
+]7;file://Jeffs-MacBook-Pro-2.local/Users/jeffdoser/Dropbox/DFG19/models/intervention]0;~/Dropbox/DFG19/models/interventionJeffs-MacBook-Pro-2:intervention jeffdoser$ [KJeffs-MacBook-Pro-2:intervention jeffdoser$ [KJeffs-MacBook-Pro-2:intervention jeffdoser$ 

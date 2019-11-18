@@ -1,0 +1,96 @@
+rm(list =ls())
+
+# This file computes the NDSI and the PSD 
+
+# Compute NDSI for all recordings ------------------------------------------
+
+library(tuneR)
+library(dplyr)
+library(seewave)
+library(soundecology)
+source("../../libs/soundscape.R")
+
+# multiple_sounds(directory = "../../soundsForJeff/ALL LA SITES-YEARS-0530-0700/", resultfile = "../data/ndsi.csv",
+#                 soundindex ="ndsi", no_cores = 4)
+
+# Extract all necessary data  ---------------------------------------------
+
+full.dat <- extractMultipleSounds("../data/ndsi.csv")
+
+# Create Design Matrix ----------------------------------------------------
+
+# Data should be structured so that all recordings for each "individual" are in 
+# sequential order. In this case, an individual is a unique combination of 
+# recording.site, day, and time. 
+n <- dim(full.dat)[1]
+ordered.dat <- full.dat %>% 
+  arrange(recording.site, day, time, year)
+head(ordered.dat, 30)
+
+# Treatment Indicator variable
+ordered.dat$trt <- ifelse(ordered.dat$recording.site %in% c("LA09", "LA10", "LA11", "LA12"), 
+                  1, 0)
+
+# # Intercept
+# ordered.dat$x0 <- rep(1, n)
+# # Temporal trend of response variable regardless of site (treatment vs control) 
+# ordered.dat$x1 <- ifelse(ordered.dat$year < 2014, 0, ordered.dat$year - 2014 + 1)
+# # Differences between trt vs control disregarding the treatment effect
+# ordered.dat$x2 <- ifelse(ordered.dat$trt == 0, 0, 1)
+# # Temporal trend of repsonse variable caused by the treatment
+# ordered.dat$x3 <- ifelse(ordered.dat$trt == 0, 0, ordered.dat$year - 2014 + 1)
+# # Influence of treatment on intercept 
+# ordered.dat$x4 <- ifelse(ordered.dat$x3 > 0, 1, 0)
+# # Create a column indicating the individual ID number
+# # Each unique site/day/time combination is an individual
+# n.ind.counter <- 1
+# ordered.dat$ind = 1
+# for (i in 2:n) {
+#   if (sum(ordered.dat[i, c("month", "day", "time", "recording.site")] == 
+#           ordered.dat[i - 1, c("month", "day", "time", "recording.site")]) == 4) {
+#     ordered.dat$ind[i] = ordered.dat$ind[i-1]
+#   } else {
+#     ordered.dat$ind[i] = ordered.dat$ind[i-1] + 1
+#   }
+# }
+
+# # write.csv(ordered.dat, "../data/full-ndsi-data.csv")
+# design.mat <- ordered.dat[, c("x0", "x1", "x2", "x3", "x4")]
+# # write.table(design.mat, "../data/X", row.names = FALSE, sep = "\t")
+# ind <- ordered.dat$ind
+# # write.table(ind, "../data/ind", row.names = FALSE, col.names = FALSE, 
+#             # sep = "\t")
+# # write.table(ordered.dat$ndsi, "../data/ndsi", row.names = FALSE, col.names = FALSE, 
+#             # sep = "\t")
+
+
+# Compute PSD for all recordings ------------------------------------------
+
+fileNames <- list.files(path = "../../soundsForJeff/ALL LA SITES-YEARS-0530-0700/", 
+                        pattern = "*.wav", full.names = TRUE)
+# Order is the same as full.dat
+# psd.dat <- psd(fileNames)
+
+
+# write.table(psd.dat, "../data/psd-raw", row.names = FALSE, col.names = FALSE, 
+            # sep = "\t")
+
+psd.dat <- read.table("../data/psd-raw")
+
+psd.dat <- cbind(psd.dat, full.dat)
+  
+
+psd.ordered.dat <- psd.dat %>% 
+  arrange(recording.site, day, time, year)
+
+psd.ordered.dat$trt <- ifelse(psd.ordered.dat$recording.site %in% 
+                                c("LA09", "LA10", "LA11", "LA12"), 1, 0)
+
+psd.table <- psd.ordered.dat[, 1:10]
+write.table(psd.table, "../data/psd-table.csv")
+write.csv(psd.ordered.dat, "../data/full-ndsi-psd-ordered.csv")
+
+
+
+
+

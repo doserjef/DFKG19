@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568123890162.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3058800033",
+    "id" : "11DE7E3D",
+    "lastKnownWriteTime" : 1568481214,
+    "last_content_update" : 1568481214,
+    "path" : "~/Dropbox/DFG19/code/07-mapOfLoggingArea.R",
+    "project_path" : "07-mapOfLoggingArea.R",
+    "properties" : {
+        "cursorPosition" : "11,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1574090556621.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "E6AE5DFE",
+    "lastKnownWriteTime" : 1574096500,
+    "last_content_update" : 1574096500727,
+    "path" : "~/Dropbox/DFKG19/code/univariateModel/singleIndexModel.R",
+    "project_path" : "singleIndexModel.R",
+    "properties" : {
+        "cursorPosition" : "3,26",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

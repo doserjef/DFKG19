@@ -1,0 +1,51 @@
+rm(list = ls())
+source("multivarSoundModel.R")
+library(coda)
+
+# Run model ---------------------------------------------------------------
+n.iter <- 500
+fileName <- "../../data/orderedIndices.csv"
+geoFileName <- "../../data/geophony.csv"
+indexNames <- c('H', 'aci', 'ndsi', 'aei')
+yearsPostTrt <- 2014:2018
+alpha.start <- 1
+beta.start <- 0
+sigma.sq.start <- 1
+lambda.start <- 1
+out1 <- multivar.sound.model(n.iter = n.iter, 
+                             fileName,
+                             geoFileName, 
+                             indexNames,
+                             yearsPostTrt, 
+                             alpha.start, 
+                             beta.start, 
+                             sigma.sq.start, 
+                             lambda.start)
+
+alpha.samples <- out1$alpha.samples
+beta.samples <- out1$beta.samples
+sigma.sq.samples <- out1$sigma.sq.samples
+lambda.samples <- out1$lambda.samples
+fitted.samples <- out1$fitted.samples
+
+
+# Summary -----------------------------------------------------------------
+
+burn.in <- floor(0.1 * n.iter)
+sub <- (burn.in+1):n.iter
+
+# alpha 
+vals <- summary(window(mcmc(t(alpha.samples)), start = burn.in))
+
+# sigma.sq
+summary(window(mcmc(sigma.sq.samples)), start = burn.in)
+
+#lambda
+vals <- summary(window(mcmc(t(lambda.samples)), start = burn.in))$quantiles
+n.indices <- length(indexNames)
+lambda.med.mat <- matrix(vals[, 3], nrow = n.indices)
+cov2cor(lambda.med.mat)
+lambda.lower.mat <- matrix(vals[, 1], nrow = n.indices)
+lambda.upper.mat <- matrix(vals[, 5], nrow = n.indices)
+cov2cor(lambda.lower.mat)
+cov2cor(lambda.upper.mat)

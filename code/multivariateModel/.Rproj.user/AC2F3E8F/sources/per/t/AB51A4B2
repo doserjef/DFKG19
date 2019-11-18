@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1556453930020.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2222365578",
+    "id" : "AB51A4B2",
+    "lastKnownWriteTime" : 1574102859,
+    "last_content_update" : 1574102859603,
+    "path" : "~/Dropbox/DFKG19/code/multivariateModel/main.R",
+    "project_path" : "main.R",
+    "properties" : {
+        "cursorPosition" : "0,15",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

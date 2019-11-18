@@ -1,0 +1,52 @@
+
+# Soundscape Analysis Functions -------------------------------------------
+
+# extractMultipleSounds is a function for extracting information from a csv 
+# file produced from the multiple_sounds() function in the soundecology 
+# library
+extractMultipleSounds <- function (fileName, stringsAsFactors = FALSE, index = "ndsi") {
+  
+  dat <- read.csv(fileName, stringsAsFactors = stringsAsFactors)
+  
+  if (tolower(index) == 'aei') {
+    dat <- dat[dat$DB_THRESHOLD != '-', ]
+  }
+  
+  # All data contained in file name
+  recording.site <- gsub("[^a-zA-Z].*$", "", dat$FILENAME)
+  recording.site <- paste(recording.site, substr(dat$FILENAME, 
+                                                 start = nchar(recording.site) + 1, 
+                                                 stop = nchar(recording.site) + 2), 
+                          sep = "")
+  curr.loc <- unique(nchar(recording.site)) + 1
+  year <- substr(dat$FILENAME, start = curr.loc ,stop = curr.loc + 3)
+  month <- substr(dat$FILENAME, start = curr.loc + 4, stop = curr.loc + 5)
+  day <- substr(dat$FILENAME, start = curr.loc + 6, stop = curr.loc + 7)
+  time <- substr(dat$FILENAME, start = curr.loc + 9, stop = curr.loc + 14)
+  complete.date <- substr(dat$FILENAME, start = curr.loc, stop = curr.loc + 14)
+  complete.date <- gsub(pattern = "-", replacement = "", x = complete.date)
+  acoustic.index <- dat$LEFT_CHANNEL
+  
+  full.dat <- data.frame(recording.site, as.integer(year), as.integer(month), 
+                         as.integer(day), as.integer(time), complete.date, acoustic.index)
+  names(full.dat) <- c("recording.site", "year", "month", "day", "time", "complete.date", 
+                       index)
+  return(full.dat)
+}
+
+
+# This function slowly computes the PSD for each frequency band for a supplied list 
+# of recording names
+psd <- function (fileNames, f = 22050, n.psd = 10) {
+  require(seewave)
+  require(tuneR)
+  n.psd <- n.psd
+  dat <- matrix(0, nrow = length(fileNames), ncol = n.psd)
+  
+  for (i in 1:length(fileNames)) {
+    print(paste("You are on recording ", i, " of ", length(fileNames), sep  = ""))
+    soundscape <- readWave(fileNames[i])
+    dat[i, ] <- soundscapespec(soundscape, f = f, plot = FALSE)[1:n.psd, 2]
+  }
+  return(dat)
+}

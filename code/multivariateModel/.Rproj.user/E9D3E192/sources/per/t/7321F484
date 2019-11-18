@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1558192679170.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2357773359",
+    "id" : "7321F484",
+    "lastKnownWriteTime" : 1570036147,
+    "last_content_update" : 1570036147460,
+    "path" : "~/Dropbox/DFG19/models/psd-intervention-year/main.R",
+    "project_path" : "main.R",
+    "properties" : {
+        "cursorPosition" : "23,0",
+        "scrollLine" : "5"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

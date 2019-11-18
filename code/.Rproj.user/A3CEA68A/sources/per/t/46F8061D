@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1556381738114.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3126449569",
+    "id" : "46F8061D",
+    "lastKnownWriteTime" : 1556453347,
+    "last_content_update" : 1556453347,
+    "path" : "~/Dropbox/DFG19/code/01-aciComputation.R",
+    "project_path" : "01-aciComputation.R",
+    "properties" : {
+        "cursorPosition" : "51,82",
+        "disableDependencyDiscovery" : "1",
+        "scrollLine" : "50"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

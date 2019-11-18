@@ -1,0 +1,13 @@
+{
+    "path" : "~/Dropbox/DFG19/data",
+    "sortOrder" : [
+        {
+            "ascending" : false,
+            "columnIndex" : 4
+        },
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}

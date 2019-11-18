@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1558093507641.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "781982813",
+    "id" : "A7C9937F",
+    "lastKnownWriteTime" : 1556453919,
+    "last_content_update" : 1558093659487,
+    "path" : "~/Dropbox/DFG19/code/03-yearDesignMatrix.R",
+    "project_path" : "03-yearDesignMatrix.R",
+    "properties" : {
+        "cursorPosition" : "17,1",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

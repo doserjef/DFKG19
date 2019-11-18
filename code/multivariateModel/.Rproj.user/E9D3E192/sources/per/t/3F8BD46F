@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1558365610360.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "457443123",
+    "id" : "3F8BD46F",
+    "lastKnownWriteTime" : 1569948138,
+    "last_content_update" : 1569948138808,
+    "path" : "~/Dropbox/DFG19/models/psd-intervention-year/summary.R",
+    "project_path" : "summary.R",
+    "properties" : {
+        "cursorPosition" : "33,0",
+        "scrollLine" : "8",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

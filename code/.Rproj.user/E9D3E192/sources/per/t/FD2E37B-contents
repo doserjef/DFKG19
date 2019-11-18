@@ -1,0 +1,46 @@
+rm(list = ls())
+library(dplyr)
+library(ggplot2)
+
+# This is just some eda values. 
+# 02-eda.R ----------------------------------------------------------------
+
+
+dat <- read.csv("../data/full-ndsi-psd-ordered", stringsAsFactors = FALSE)
+
+trt <- c("LA09", "LA10", "LA11", "LA12")
+
+mean.ndsi.site.year <- dat %>% 
+  group_by(year, recording.site, trt = as.factor(trt)) %>% 
+  summarize(mean.ndsi = mean(ndsi))
+
+ggplot(data = mean.ndsi.site.year, aes(x = year, y = mean.ndsi, color = recording.site)) + 
+  geom_line(aes(linetype = trt)) + 
+  scale_linetype_discrete(name = "Type", 
+                          labels = c("Control", "Treatment")) + 
+  scale_color_discrete(name = "Recording Site") + 
+  ylab("Mean NDSI") + 
+  xlab("Year") + 
+  theme_classic()
+
+mean.psd.site.year <- dat %>% 
+  group_by(year, recording.site, trt = as.factor(trt)) %>% 
+  summarize(mean.psd1 = mean(V1), mean.psd2 = mean(V2), 
+            mean.psd3 = mean(V3), mean.psd4 = mean(V4), 
+            mean.psd5 = mean(V5), mean.psd6 = mean(V6), 
+            mean.psd7 = mean(V7), mean.psd8 = mean(V8), 
+            mean.psd9 = mean(V9), mean.psd10 = mean(V10))
+
+ggplot(data = mean.psd.site.year, aes(x = year, y = mean.psd1, color = recording.site)) + 
+  geom_line(aes(linetype = trt)) + 
+  scale_linetype_discrete(name = "Type", 
+                          labels = c("Control", "Treatment")) + 
+  scale_color_discrete(name = "Recording Site") + 
+  ylab("Mean PSD 1") + 
+  xlab("Year") + 
+  theme_classic()
+
+psd.mat <- dat[, 2:11]
+cor(psd.mat)
+
+# write.table(psd.mat, file = "../data/psd", row.names = FALSE, col.names = FALSE, sep = "\t")

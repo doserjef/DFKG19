@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1558952418530.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "71655FF5",
+    "lastKnownWriteTime" : 1574096917,
+    "last_content_update" : 1574096917311,
+    "path" : "~/Dropbox/DFKG19/code/univariateModel/main.R",
+    "project_path" : "main.R",
+    "properties" : {
+        "cursorPosition" : "22,0",
+        "scrollLine" : "7",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1556381738925.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "271245594",
+    "id" : "D59803C7",
+    "lastKnownWriteTime" : 1556909569,
+    "last_content_update" : 1556909569289,
+    "path" : "~/Dropbox/DFG19/code/02-eda.R",
+    "project_path" : "02-eda.R",
+    "properties" : {
+        "cursorPosition" : "8,40",
+        "disableDependencyDiscovery" : "1",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

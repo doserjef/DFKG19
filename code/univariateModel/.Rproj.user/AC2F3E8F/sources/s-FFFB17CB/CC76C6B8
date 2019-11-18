@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1571234194997.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "CC76C6B8",
+    "lastKnownWriteTime" : 1574094167,
+    "last_content_update" : 1574094167825,
+    "path" : "~/Dropbox/DFKG19/code/univariateModel/validation.R",
+    "project_path" : "validation.R",
+    "properties" : {
+        "cursorPosition" : "6,37",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

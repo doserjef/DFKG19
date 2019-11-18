@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1569940214635.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4261594162",
+    "id" : "6235C00D",
+    "lastKnownWriteTime" : 1569943119,
+    "last_content_update" : 1569943119719,
+    "path" : "~/Dropbox/DFG19/code/08-additionalIndexComputations.R",
+    "project_path" : "08-additionalIndexComputations.R",
+    "properties" : {
+        "cursorPosition" : "16,28",
+        "scrollLine" : "4"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

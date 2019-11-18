@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1558199621151.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3150705573",
+    "id" : "BCEFEF89",
+    "lastKnownWriteTime" : 1558952407,
+    "last_content_update" : 1558952407,
+    "path" : "~/Dropbox/DFG19/models/intervention-year/sim.R",
+    "project_path" : "sim.R",
+    "properties" : {
+        "cursorPosition" : "13,26",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

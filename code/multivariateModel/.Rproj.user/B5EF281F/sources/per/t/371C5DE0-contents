@@ -1,0 +1,273 @@
+rm(list = ls())
+setwd("~/Dropbox/DFG19/models/psd-intervention-year/")
+source("../../code/04-psdIntYearDesignMatrix.R")
+library(coda)
+
+# Main Program ------------------------------------------------------------
+
+# Multivariate normal random number generator
+rmvn <- function(n, mu=0, V = matrix(1)){
+  p <- length(mu)
+  if(any(is.na(match(dim(V),p))))
+    stop("Dimension problem!")
+  D <- chol(V)
+  t(matrix(rnorm(n*p), ncol=p)%*%D + rep(mu,rep(n,p)))
+}
+
+# Inverse Gamma random number generator
+rigamma <- function(n, a, b){
+  1/rgamma(n = n, shape = a, rate = b)
+} 
+
+# Logit data transformation
+logit <- function(theta, a, b) {
+  log((theta-a)/(b-theta))
+}
+
+# Inverse logit transformation
+logit.inv <- function(z, a, b) {
+  b-(b-a)/(1+exp(z))
+}
+
+
+# Params ------------------------------------------------------------------
+
+n.samples <- 500
+n.sites <- length(unique(ordered.long.dat$recording.site))
+psd <- ordered.long.dat$value
+y <- as.matrix(logit(psd, a = 0, b = 1))
+ind <- ordered.long.dat$ind
+n.ind <- length(unique(ind))
+n <- nrow(X)
+n.alpha <- dim(X)[2]
+n.beta <- 1
+s <- rep(0, n.ind)
+for (i in 1:n.ind) {
+  curr <- sum(ind == i)
+  s[i] <- curr / n.psd
+}
+ind.beta <- rep(1:n.ind, each = n.psd)
+
+# Priors ------------------------------------------------------------------
+
+# Normal prior on fixed regression coefficients
+alpha.mu <- rep(0, n.alpha)
+alpha.var <- rep(10000, n.alpha)
+
+# Normal prior on random individual effects
+beta.mu <- matrix(0, nrow = n.ind * n.psd, ncol = n.beta)
+
+# Inverse gamma prior on process variance
+sigma.sq.a <- 2
+sigma.sq.b <- 1
+
+# Inverse wishart prior on 10 x 10 covariance matrix
+R <- diag(0.1, n.psd)
+r <- 3
+
+
+# Starting values ---------------------------------------------------------
+
+alpha <- rep(0, n.alpha)
+beta <- matrix(0, nrow = n.ind * n.psd, ncol = n.beta)
+sigma.sq <- 1
+lambda <- diag(.1, n.psd)
+y.hat <- rep(0, n)
+
+
+# Sampler Prep ------------------------------------------------------------
+
+alpha.samples <- matrix(0, nrow = n.alpha, ncol = n.samples)
+beta.samples <- matrix(0, nrow = n.ind * n.psd, ncol = n.samples)
+fitted.samples <- matrix(0, nrow = n, ncol = n.samples)
+lambda.samples <- matrix(0, nrow = n.psd * n.psd, ncol = n.samples)
+sigma.sq.samples <- rep(0, n.samples)
+XTX <- t(X)%*%X
+
+# Gibbs Sampler -----------------------------------------------------------
+
+for (k in 1:n.samples) {
+  
+  # Update alpha samples
+  V <- chol2inv(chol(XTX / sigma.sq + diag(1/alpha.var, n.alpha)))
+  sum.diffs <- rep(0, n.alpha)
+  for (i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # Faster way to code the indicator matrix described in the sampler
+    beta.i <- rep(beta[ind.beta ==i], times = s[i]) 
+    sum.diffs <- sum.diffs + t(X.i) %*% (y.i - beta.i)
+  }
+  v <- sum.diffs / sigma.sq
+  alpha <- rmvn(1, V%*%v, V)
+  
+  # Update beta samples
+  for (i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    V <- chol2inv(chol(diag(s[i] / sigma.sq, n.psd) + chol2inv(chol(lambda))))
+    # Indicator matrix (aka w)
+    ones.mat <- diag(1, n.psd)
+    ones.mat <- matrix(rep(ones.mat, s[i]), nrow = n.psd * s[i], 
+                       ncol = n.psd, byrow = T)
+    v <-  t(ones.mat) %*% (y.i - X.i %*% alpha) / sigma.sq
+    beta[((i-1)*n.psd + 1):(i*n.psd), ] <- rmvn(1, V%*%v, V)
+  }
+  
+  # Update sigma.sq samples
+  a <- sigma.sq.a + 5 * sum(s)
+  b.sum <- 0
+  for (i in 1:n.ind) {
+    X.i <- X[ind == i, ]
+    y.i <- y[ind == i]
+    # This is a faster way to code the identicator matrix described in the sampler
+    beta.i <- rep(beta[ind.beta ==i], times = s[i]) 
+    b.sum <- b.sum + t((y.i - (X.i%*%alpha + beta.i))) %*% 
+      (y.i - (X.i%*%alpha + beta.i))
+  }
+  b <- sigma.sq.b + .5 * b.sum
+  sigma.sq <- rigamma(1, a, b)
+  
+  # Update lambda (inverse) samples
+  a <- n.ind + r
+  beta.sum <- matrix(0, ncol = n.psd, nrow = n.psd)
+  for (i in 1:n.ind) {
+    beta.sum <- beta.sum + (beta[((i-1)*n.psd + 1):(i*n.psd), ] %*% 
+                              t(beta[((i-1)*n.psd + 1):(i*n.psd), ]))
+  }
+  b <- chol2inv(chol(beta.sum + r*R))
+  # Note that the rWishart function returns a 3D array, so you need to 
+  # extract only the first two dimensions
+  lambda <- chol2inv(chol(rWishart(1, a, b)[, , 1]))
+  
+  # Fitted values
+  curr.length <- 0 
+  for (i in 1:n.ind) {
+    x.i <- X[ind == i, ]
+    V <- diag(sigma.sq, s[i] * n.psd)
+    beta.i <- rep(beta[ind.beta ==i], times = s[i])
+    mu <- x.i %*% alpha + beta.i
+    y.hat[(curr.length + 1):(curr.length + s[i]*n.psd)] <- 
+      rmvn(n = 1, mu = mu, V = V)
+    curr.length <- curr.length + s[i]*n.psd
+  }
+  
+  # Save Samples
+  alpha.samples[, k] <- alpha
+  beta.samples[, k] <- beta[, 1]
+  lambda.samples[, k] <- c(lambda)
+  sigma.sq.samples[k] <- sigma.sq
+  fitted.samples[, k] <- y.hat
+  
+  print(paste(k/n.samples * 100, " percent complete", sep = ""))
+  
+}
+
+
+# Summary -----------------------------------------------------------------
+
+# Look at process varaince
+plot(mcmc(sigma.sq.samples), density = FALSE)
+
+# Lambda covariance matrix
+summary(mcmc(t(lambda.samples)))
+
+# Burn in
+burn.in <- floor(0.5 * n.samples)
+sub <- (burn.in+1):n.samples
+
+summary(mcmc(window(t(lambda.samples), start = burn.in)))
+
+y.hat.mean <- apply(fitted.samples[, sub], 1, mean)
+plot(y[, 1], y.hat.mean)
+lines(y.hat.mean, y.hat.mean, col = 'red')
+
+resids <- y.hat.mean - y[, 1]
+plot(resids, type = 'l')
+
+options(scipen=999)
+m.quants <- summary(mcmc(window(t(alpha.samples), 
+                                start = burn.in)))$quantiles
+# Control
+ctrl.alpha.post <- matrix(0, nrow = post.trt.years * n.psd, ncol = 5)
+start <- 3
+for (i in 1:n.psd) {
+  ctrl.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ] <- 
+    m.quants[start:(start+post.trt.years-1), ]
+  start <- start + post.trt.years*2 + 2
+}
+ctrl.alpha.post <- as.data.frame(ctrl.alpha.post)
+# Treatment
+trt.alpha.post <- matrix(0, nrow = post.trt.years * n.psd, ncol = 5)
+start <- 8
+for (i in 1:n.psd) {
+  trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ] <- 
+    m.quants[start:(start+post.trt.years-1), ]
+  start <- start + post.trt.years*2 + 2
+}
+trt.alpha.post <- as.data.frame(trt.alpha.post)
+
+years <- c(2014:2018)
+trt.alpha.post$years <- years
+ctrl.alpha.post$years <- years
+
+# Easiest to do this one at a time to account for the different ranges
+i <- 9
+png(paste("../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.ctrl <- ctrl.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+plot(years, curr.ctrl[, 3], axes = FALSE, pch = 17, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = expression(paste(Delta, "log(PSD9) from pre-trt",
+                                            sep = "")), 
+     ylim = c(min(c(curr.trt[, 1], curr.ctrl[, 1])), 
+              max(c(curr.trt[, 5], curr.ctrl[, 5]))), xpd = TRUE, 
+     col = 'blue'
+)
+points(years, curr.trt[, 3], pch = 19, col = 'red')
+abline(h = 0, lty = 2)
+segments(years, curr.ctrl[, 1], years, curr.ctrl[, 5], col = 'blue')
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'red', lty = 2)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+curr.ctrl.round <- round(curr.ctrl / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round, curr.ctrl.round))
+axis(2, at = seq(y.vals[1], y.vals[2], by = 0.5), 
+     labels = seq(y.vals[1], y.vals[2], by = 0.5), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+legend(2017, 0.4, legend = c("Control", "Treatment"), col = c("blue", "red"),
+       lty = c(1, 2), pch = c(17, 19))
+title("PSD 9-10 kHz")
+dev.off()
+
+i <- 10
+png(paste("../figures/psd", i, "YearEffects.png", sep = ""),
+    width = 480, height = 480)
+par(mar=c(5.5,5.1,4.1,2.1))
+curr.ctrl <- ctrl.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+curr.trt <- trt.alpha.post[((i-1)*post.trt.years + 1):(i*post.trt.years), ]
+plot(years, curr.ctrl[, 3], axes = FALSE, pch = 17, cex.lab = 1.5, cex.axis = 1.5,
+     xlab = "Year", ylab = expression(paste(Delta, "log(PSD10) from pre-trt",
+                                            sep = "")), 
+     ylim = c(min(c(curr.trt[, 1], curr.ctrl[, 1])), 
+              max(c(curr.trt[, 5], curr.ctrl[, 5]))), xpd = TRUE, 
+     col = 'blue'
+)
+points(years, curr.trt[, 3], pch = 19, col = 'red')
+abline(h = 0, lty = 2)
+segments(years, curr.ctrl[, 1], years, curr.ctrl[, 5], col = 'blue')
+segments(years, curr.trt[, 1], years, curr.trt[, 5], col = 'red', lty = 2)
+axis(1, cex.axis = 1.25)
+curr.trt.round <- round(curr.trt / 0.5) * 0.5
+curr.ctrl.round <- round(curr.ctrl / 0.5) * 0.5
+y.vals <- range(c(curr.trt.round, curr.ctrl.round))
+axis(2, at = seq(y.vals[1], y.vals[2], by = 0.5), 
+     labels = seq(y.vals[1], y.vals[2], by = 0.5), las = 1,
+     xpd = TRUE, cex.axis = 1.25)
+legend(2014, -1.75, legend = c("Control", "Treatment"), col = c("blue", "red"),
+       lty = c(1, 2), pch = c(17, 19))
+title("PSD 10-11 kHz")
+dev.off()
+
+        

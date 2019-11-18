@@ -1,0 +1,19 @@
+This directory contains all necessary code for using the univariate model
+described in Doser et al (2019) Assessing soundscape disturbance through hierarchical models 
+and acoustic indices: a case study on a shelterwood logged northern Michigan forest
+
+File Descriptions: 
+
+fitted-samples-*: fitted data values from the models used in the analysis in the paper
+main.R: parent file for running the univariate model
+no-beta-*: files used for model comparison in the paper
+pfile-*: files that show the starting values used for three separate runs of the model
+         to assess convergence using the Gelman-Rubin diagnostic
+sim-main.R: parent file for running and testing the univariate model with simulated data
+sim.R: contains function for simulating data to test univariate model
+singleIndexModel.R: function containing the Gibbs sampler to run the univariate model
+summary.R: contains summary information and graphics to assess results from main.R
+theta-no-diffs-samples: samples from simpler model used for model comparison in paper
+theta-no-rain-samples: samples from simpler model used for model comparison in paper
+theta-samples-*: posterior distributions for three chains of the Gibbs sampler
+validation.R: code used to compare different models in paper

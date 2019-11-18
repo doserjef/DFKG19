@@ -1,0 +1,38 @@
+rm(list = ls())
+library(dplyr)
+# 03-yearDesignMatrix -----------------------------------------------------
+
+dat <- read.csv("../data/full-ndsi-psd-ordered.csv")
+
+n <- nrow(dat)
+# Each unique site/day/time combination is an individual
+n.ind.counter <- 1
+dat$ind = 1
+for (i in 2:n) {
+  if (sum(dat[i, c("month", "day", "time", "recording.site")] == 
+          dat[i - 1, c("month", "day", "time", "recording.site")]) == 4) {
+    dat$ind[i] = dat$ind[i-1]
+  } else {
+    dat$ind[i] = dat$ind[i-1] + 1
+  }
+}
+
+post.trt.years <- 5
+X <- matrix(0, nrow = n, ncol = 2 + post.trt.years * 2)
+
+X[, 1] <- 1
+X[, 2][dat$trt == 1] <- 1
+X[, 3] <- ifelse(dat$year == 2014, 1, 0)
+X[, 4] <- ifelse(dat$year == 2015, 1, 0)
+X[, 5] <- ifelse(dat$year == 2016, 1, 0)
+X[, 6] <- ifelse(dat$year == 2017, 1, 0)
+X[, 7] <- ifelse(dat$year == 2018, 1, 0)
+X[, 8] <- ifelse(dat$year == 2014 & dat$trt == 1, 1, 0)
+X[, 9] <- ifelse(dat$year == 2015 & dat$trt == 1, 1, 0)
+X[, 10] <- ifelse(dat$year == 2016 & dat$trt == 1, 1, 0)
+X[, 11] <- ifelse(dat$year == 2017 & dat$trt == 1, 1, 0)
+X[, 12] <- ifelse(dat$year == 2018 & dat$trt == 1, 1, 0)
+
+write.table(X, "../data/X-year", row.names = FALSE, col.names = FALSE, sep = "\t")
+write.table(dat$ndsi, "../data/ndsi", row.names = FALSE, col.names = FALSE, sep = "\t")
+write.table(dat$ind, "../data/ind", row.names = FALSE, col.names = FALSE, sep = "\t")
